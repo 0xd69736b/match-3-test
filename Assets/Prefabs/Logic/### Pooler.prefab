@@ -1,0 +1,109 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2344678108609759128
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2344678108609759134}
+  - component: {fileID: 2344678108609759135}
+  - component: {fileID: 2344678108609759132}
+  m_Layer: 0
+  m_Name: '### Pooler'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2344678108609759134
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2344678108609759128}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2344678108609759135
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2344678108609759128}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89e350d709346ef4288feb9e9e3d7b7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2344678108609759132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2344678108609759128}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63593faeace5f6a48841d50ced9c8b55, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  InitializeAtPos: {x: 100, y: 0, z: 100}
+  _cookObjects:
+  - Prefab: {fileID: 7667143225876670874, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
+      type: 3}
+    NumberOfObjects: 16
+    PoolType: 1
+  - Prefab: {fileID: 6984060934320307379, guid: 784323496d719684cb6201b200b95864,
+      type: 3}
+    NumberOfObjects: 16
+    PoolType: 1
+  - Prefab: {fileID: 6117402354121330135, guid: 93bd623174244c047af9ce43cc254c32,
+      type: 3}
+    NumberOfObjects: 16
+    PoolType: 1
+  - Prefab: {fileID: 613778996103721386, guid: 473855e3d0d3c8143836b678c9a1b8b5, type: 3}
+    NumberOfObjects: 16
+    PoolType: 1
+  - Prefab: {fileID: 5125166474795790717, guid: 91ba2370328500d4db689dad894b1602,
+      type: 3}
+    NumberOfObjects: 16
+    PoolType: 1
+  - Prefab: {fileID: 1210587634127288510, guid: aa0291e650b382941875040db9e8a232,
+      type: 3}
+    NumberOfObjects: 5
+    PoolType: 1
+  - Prefab: {fileID: 8904178830182364799, guid: d794be08823edd34da1790efd1739074,
+      type: 3}
+    NumberOfObjects: 10
+    PoolType: 1
+  - Prefab: {fileID: 8968486364681163996, guid: 05c754e3d4f9fd349ac1def58d17670f,
+      type: 3}
+    NumberOfObjects: 5
+    PoolType: 1
+  - Prefab: {fileID: 4157327684024108653, guid: e5bba4196a7d43441bf62bd125171449,
+      type: 3}
+    NumberOfObjects: 10
+    PoolType: 1
+  - Prefab: {fileID: 1865769399618337668, guid: 986dd822e2e6d4b45b2a054259f1241b,
+      type: 3}
+    NumberOfObjects: 10
+    PoolType: 1
+  - Prefab: {fileID: 5902279534240010874, guid: 072620c89288cc14e9872d103c2b2fbe,
+      type: 3}
+    NumberOfObjects: 10
+    PoolType: 1
+  - Prefab: {fileID: 4897855320600288343, guid: 7fcedfb0407bb5d438de37da2d61df30,
+      type: 3}
+    NumberOfObjects: 10
+    PoolType: 1
+  autoPrewarm: 1

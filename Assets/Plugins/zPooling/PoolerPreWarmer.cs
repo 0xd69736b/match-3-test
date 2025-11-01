@@ -22,105 +22,136 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Pooling {
-   /// <summary>
-   /// Behaviour to prepare objects for pooling, and also sustain pool at certain numbers of objects on scene
-   /// transition
-   /// </summary>
-   public class PoolerPreWarmer : MonoBehaviour {
-      /// <summary>
-      /// Position at which objects are initialized
-      /// </summary>
-      [Tooltip("Position at which objects are initialized")]
-      public Vector3 InitializeAtPos = new Vector3(2000f, 2000f, 2000f);
+namespace Pooling
+{
+    /// <summary>
+    /// Behaviour to prepare objects for pooling, and also sustain pool at certain numbers of objects on scene
+    /// transition
+    /// </summary>
+    public class PoolerPreWarmer : MonoBehaviour
+    {
+        /// <summary>
+        /// Position at which objects are initialized
+        /// </summary>
+        [Tooltip("Position at which objects are initialized")]
+        public Vector3 InitializeAtPos = new Vector3(2000f, 2000f, 2000f);
 
-      [Header("Prewarm Data")]
-      [SerializeField]
-      private List<PoolData> _cookObjects = new List<PoolData>();
+        [Header("Prewarm Data")]
+        [SerializeField]
+        private List<PoolData> _cookObjects = new List<PoolData>();
+        [SerializeField]
+        private bool autoPrewarm;
 
-      #region [Fields]
+        #region [Fields]
 
-      private readonly Dictionary<GameObject, PoolData> _lookup = new Dictionary<GameObject, PoolData>();
+        private readonly Dictionary<GameObject, PoolData> _lookup = new Dictionary<GameObject, PoolData>();
 
-      #endregion
+        #endregion
 
-      private void Awake() {
-         this.UseForExtensions();
-         
-         InitLookup();
-      }
+        private void Awake()
+        {
+            this.UseForExtensions();
 
-      private void InitLookup() {
-         foreach (PoolData poolData in _cookObjects) {
+            InitLookup();
+            if (!autoPrewarm)
+                return;
+
+            DoPrewarmOfCookedObjects();
+        }
+
+        private void InitLookup()
+        {
+            foreach (PoolData poolData in _cookObjects)
+            {
+                GameObject seekPrefab = poolData.Prefab;
+
+                if (_lookup.ContainsKey(seekPrefab))
+                {
+#if DEBUG
+                    Debug.LogWarning("PoolerPreWarmer:: Duplicate of prefab "
+                                     + seekPrefab
+                                     + ". Only first one will be used");
+#endif
+                    continue;
+                }
+
+                _lookup.Add(seekPrefab, poolData);
+            }
+        }
+
+        /// <summary>
+        /// Adds a prewarm entry to the list and also performs prewarming of passed data 
+        /// </summary>
+        /// <param name="poolData"></param>
+        public void AddPrewarmEntry(PoolData poolData)
+        {
+            Prewarm(poolData);
+
             GameObject seekPrefab = poolData.Prefab;
 
-            if (_lookup.ContainsKey(seekPrefab)) {
-#if DEBUG
-               Debug.LogWarning("PoolerPreWarmer:: Duplicate of prefab "
-                                + seekPrefab
-                                + ". Only first one will be used");
-#endif
-               continue;
+            // Replace existing data with new one
+            if (_lookup.ContainsKey(seekPrefab))
+            {
+                FindAndReplaceInList(poolData);
+                _lookup[seekPrefab] = poolData;
             }
-
-            _lookup.Add(seekPrefab, poolData);
-         }
-      }
-
-      /// <summary>
-      /// Adds a prewarm entry to the list and also performs prewarming of passed data 
-      /// </summary>
-      /// <param name="poolData"></param>
-      public void AddPrewarmEntry(PoolData poolData) {
-         Prewarm(poolData);
-
-         GameObject seekPrefab = poolData.Prefab;
-
-         // Replace existing data with new one
-         if (_lookup.ContainsKey(seekPrefab)) {
-            FindAndReplaceInList(poolData);
-            _lookup[seekPrefab] = poolData;
-         } else {
-            _lookup.Add(seekPrefab, poolData);
-         }
-      }
-
-      private void Prewarm(PoolData data) {
-         switch (data.PoolType) {
-            case PoolType.GenericPooler:
-               data.Prefab.SustainPool(data.NumberOfObjects, InitializeAtPos);
-               break;
-            case PoolType.AutoPooler:
-               data.Prefab.SustainAutoPool(data.NumberOfObjects, InitializeAtPos);
-               break;
-         }
-      }
-
-      private void FindAndReplaceInList(PoolData data) {
-         GameObject seekPrefab = data.Prefab;
-
-         for (int i = 0; i < _cookObjects.Count; i++) {
-            PoolData pd = _cookObjects[i];
-
-            if (pd.Prefab == seekPrefab) {
-               _cookObjects[i] = data;
-               return;
+            else
+            {
+                _lookup.Add(seekPrefab, poolData);
             }
-         }
-      }
-   }
+        }
 
-   [System.Serializable]
-   public struct PoolData {
-      public GameObject Prefab;
-      public int NumberOfObjects;
-      public PoolType PoolType;
-   }
+        private void Prewarm(PoolData data)
+        {
+            switch (data.PoolType)
+            {
+                case PoolType.GenericPooler:
+                    data.Prefab.SustainPool(data.NumberOfObjects, InitializeAtPos);
+                    break;
+                case PoolType.AutoPooler:
+                    data.Prefab.SustainAutoPool(data.NumberOfObjects, InitializeAtPos);
+                    break;
+            }
+        }
 
-   [System.Serializable]
-   public enum PoolType {
-      None = 0,
-      GenericPooler = 1,
-      AutoPooler = 2,
-   }
+        private void FindAndReplaceInList(PoolData data)
+        {
+            GameObject seekPrefab = data.Prefab;
+
+            for (int i = 0; i < _cookObjects.Count; i++)
+            {
+                PoolData pd = _cookObjects[i];
+
+                if (pd.Prefab == seekPrefab)
+                {
+                    _cookObjects[i] = data;
+                    return;
+                }
+            }
+        }
+
+        private void DoPrewarmOfCookedObjects()
+        {
+            for(int i = 0; i < _cookObjects.Count; ++i)
+            {
+                Prewarm(_cookObjects[i]);
+            }
+        }
+    }
+
+    [System.Serializable]
+    public struct PoolData
+    {
+        public GameObject Prefab;
+        public int NumberOfObjects;
+        public PoolType PoolType;
+    }
+
+    [System.Serializable]
+    public enum PoolType
+    {
+        None = 0,
+        GenericPooler = 1,
+        AutoPooler = 2,
+    }
 }

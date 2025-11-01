@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using Pooling;
 
 public class SC_GameLogic : MonoBehaviour
 {
@@ -13,13 +14,14 @@ public class SC_GameLogic : MonoBehaviour
     public GlobalEnums.GameState CurrentState { get { return currentState; } }
 
     #region MonoBehaviour
-    private void Awake()
-    {
-        Init();
-    }
+    //private void Awake()
+    //{
+        
+    //}
 
     private void Start()
     {
+        Init();
         StartGame();
     }
 
@@ -71,8 +73,13 @@ public class SC_GameLogic : MonoBehaviour
         if (Random.Range(0, 100f) < SC_GameVariables.Instance.bombChance)
             _GemToSpawn = SC_GameVariables.Instance.bomb;
 
-        SC_Gem _gem = Instantiate(_GemToSpawn, new Vector3(_Position.x, _Position.y + SC_GameVariables.Instance.dropHeight, 0f), Quaternion.identity);
-        _gem.transform.SetParent(unityObjects["GemsHolder"].transform);
+        SC_Gem _gem = _GemToSpawn.GO.Pool<SC_Gem>();
+        Vector3 pos = new Vector3(_Position.x, _Position.y + SC_GameVariables.Instance.dropHeight, 0f);
+        _gem.SetPositionAndRotation(pos, Quaternion.identity);
+        //SC_Gem _gem = Instantiate(_GemToSpawn, new Vector3(_Position.x, _Position.y + SC_GameVariables.Instance.dropHeight, 0f), Quaternion.identity);
+        //_gem.transform.SetParent(unityObjects["GemsHolder"].transform);
+
+        _gem.SetParent(unityObjects["GemsHolder"].transform);
         _gem.name = "Gem - " + _Position.x + ", " + _Position.y;
         gameBoard.SetGem(_Position.x,_Position.y, _gem);
         _gem.SetupGem(this,_Position);
@@ -136,9 +143,12 @@ public class SC_GameLogic : MonoBehaviour
         SC_Gem _curGem = gameBoard.GetGem(_Pos.x,_Pos.y);
         if (_curGem != null)
         {
-            Instantiate(_curGem.destroyEffect, new Vector2(_Pos.x, _Pos.y), Quaternion.identity);
+            PoolObject destroyEffectInstance = _curGem.destroyEffect.Pool<PoolObject>();
+            destroyEffectInstance.SetPositionAndRotation(new Vector2(_Pos.x, _Pos.y), Quaternion.identity);
+            //Instantiate(_curGem.destroyEffect, new Vector2(_Pos.x, _Pos.y), Quaternion.identity);
 
-            Destroy(_curGem.gameObject);
+            _curGem.Decommission();
+            //Destroy(_curGem.gameObject);
             SetGem(_Pos.x,_Pos.y, null);
         }
     }
@@ -191,7 +201,8 @@ public class SC_GameLogic : MonoBehaviour
         }
 
         foreach (SC_Gem g in foundGems)
-            Destroy(g.gameObject);
+            //Destroy(g.gameObject);
+            g.Decommission();
     }
     public void FindAllMatches()
     {

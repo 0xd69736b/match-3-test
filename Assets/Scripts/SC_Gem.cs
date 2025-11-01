@@ -1,11 +1,13 @@
-﻿using System.Collections;
+﻿using Pooling;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SC_Gem : MonoBehaviour
+public class SC_Gem : PoolObject
 {
     [HideInInspector]
     public Vector2Int posIndex;
+    
 
     private Vector2 firstTouchPosition;
     private Vector2 finalTouchPosition;
@@ -22,13 +24,15 @@ public class SC_Gem : MonoBehaviour
     public int blastSize = 1;
     private SC_GameLogic scGameLogic;
 
+    
+
     void Update()
     {
-        if (Vector2.Distance(transform.position, posIndex) > 0.01f)
-            transform.position = Vector2.Lerp(transform.position, posIndex, SC_GameVariables.Instance.gemSpeed * Time.deltaTime);
+        if (Vector2.Distance(tr.position, posIndex) > 0.01f)
+            tr.position = Vector2.Lerp(tr.position, posIndex, SC_GameVariables.Instance.gemSpeed * Time.deltaTime);
         else
         {
-            transform.position = new Vector3(posIndex.x, posIndex.y, 0);
+            tr.position = new Vector3(posIndex.x, posIndex.y, 0);
             scGameLogic.SetGem(posIndex.x, posIndex.y, this);
         }
         if (mousePressed && Input.GetMouseButtonUp(0))
@@ -128,4 +132,6 @@ public class SC_Gem : MonoBehaviour
             }
         }
     }
+
+
 }
