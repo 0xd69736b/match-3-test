@@ -12,8 +12,8 @@ namespace BoardLogic
     {
         public class MoveRequest
         {
-            public PoolObject target;
-            public Vector2Int endPos;
+            public List<PoolObject> target;
+            public List<Vector2Int> endPos;
             public float duration;
             public AnimationCurve curve;
             public Action<MoveRequest> onCompleted;
@@ -42,6 +42,22 @@ namespace BoardLogic
         {
             MoveRequest moveRequest = new MoveRequest()
             {
+                target = new List<PoolObject> { target },
+                endPos = new List<Vector2Int> { endPoint },
+                duration = duration,
+                curve = curve,
+                onCompleted = onCompleted
+            };
+
+            movesQueue.Enqueue(moveRequest);
+
+            TryRun();
+        }
+
+        public void EnqueueMove(List<PoolObject> target, List<Vector2Int> endPoint, float duration, AnimationCurve curve, Action<MoveRequest> onCompleted = null)
+        {
+            MoveRequest moveRequest = new MoveRequest()
+            {
                 target = target,
                 endPos = endPoint,
                 duration = duration,
@@ -55,6 +71,28 @@ namespace BoardLogic
         }
 
         public void EnqueueMove(PoolObject target, Vector2Int endPoint, Action<MoveRequest> onCompleted = null)
+        {
+            MoveRequest moveRequest = new MoveRequest()
+            {
+                target = new List<PoolObject> { target },
+                endPos = new List<Vector2Int> { endPoint },
+                duration = defaultData.duration,
+                curve = defaultData.curve,
+                onCompleted = onCompleted
+            };
+
+            movesQueue.Enqueue(moveRequest);
+
+            TryRun();
+        }
+
+        public void EnqueueMove(MoveRequest moveRequest)
+        {
+            movesQueue.Enqueue(moveRequest);
+            TryRun();
+        }
+
+        public void EnqueueMove(List<PoolObject> target, List<Vector2Int> endPoint, Action<MoveRequest> onCompleted = null)
         {
             MoveRequest moveRequest = new MoveRequest()
             {
@@ -86,8 +124,14 @@ namespace BoardLogic
             {
                 MoveRequest request = movesQueue.Dequeue();
 
-                Vector3 startPos = request.target.Tr.position;
-                Vector3 endPos = new Vector3(request.endPos.x, request.endPos.y);
+                List<PoolObject> targets = request.target;
+                List<Vector2Int> endPoses = request.endPos;
+                Vector3[] startPoses = new Vector3[targets.Count];
+                for(int i = 0; i < targets.Count; ++i)
+                {
+                    startPoses[i] = targets[i].Tr.position;
+                }
+
                 float timePassed = 0;
                 float duration = request.duration;
                 AnimationCurve curve = request.curve;
@@ -96,12 +140,21 @@ namespace BoardLogic
                 {
                     timePassed += Time.smoothDeltaTime;
                     float t = timePassed / duration;
-                    Vector3 pos = Vector3.LerpUnclamped(startPos, endPos, curve.Evaluate(t));
-                    request.target.Tr.position = pos;
+                    float et = curve.Evaluate(t);
+                    for(int i = 0; i < targets.Count; ++i)
+                    {
+                        Vector2Int endpos = endPoses[i];
+                        Vector3 pos = Vector3.LerpUnclamped(startPoses[i], new Vector3(endpos.x, endpos.y), et);
+                        targets[i].Tr.position = pos;
+                    }
                     yield return null;
                 }
 
-                request.target.Tr.position = endPos;
+                for (int i = 0; i < targets.Count; ++i)
+                {
+                    Vector2Int endpos = endPoses[i];
+                    request.target[i].Tr.position = new Vector3(endpos.x, endpos.y);
+                }
                 request.onCompleted?.Invoke(request);
             }
 

@@ -21,16 +21,17 @@ namespace FillBoardLogic
         private Transform gemsRoot;
         private StrategyAnimationsData defaultData;
 
-        public BoardFiller(GameBoard gameBoard, CoroutineRunner coroutineRunner, SC_GameVariables gameVariables, SC_GameLogic gameLogic)
+        public BoardFiller(GameBoard gameBoard, CoroutineRunner coroutineRunner, SC_GameVariables gameVariables, SC_GameLogic gameLogic, GemMover gemMover)
         {
             this.gameBoard = gameBoard;
             this.coroutineRunner = coroutineRunner;
             this.gameVariables = gameVariables;
+            this.gemMover = gemMover;
             IGemPicker gemPicker = new RandomGamePicker(gameVariables, gameBoard);
             IGemSpawner gemSpawner = new GemInstantSpawner(gemPicker, gameVariables);
             IGemPicker bgGemPicker = new BackgroundGemPicker(gameVariables);
             IGemSpawner bgGemSpawner = new BgTileSpawner(bgGemPicker);
-            gemMover = new GemMover(coroutineRunner);
+            
 
             backgroundStrategy = new ParallelFillInstantStrategy(gameBoard, bgGemSpawner, gemMover, coroutineRunner, gameLogic);
             gemsFillStrategy = new SequentialFillAnimatedStrategy(gameBoard, gemSpawner, gemMover, gameLogic);

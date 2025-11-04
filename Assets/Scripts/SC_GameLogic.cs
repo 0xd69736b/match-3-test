@@ -5,6 +5,7 @@ using UnityEngine;
 using Pooling;
 using FillBoardLogic;
 using Utility;
+using BoardLogic;
 
 public class SC_GameLogic : MonoBehaviour
 {
@@ -21,10 +22,12 @@ public class SC_GameLogic : MonoBehaviour
     private GlobalEnums.GameState currentState = GlobalEnums.GameState.move;
     public GlobalEnums.GameState CurrentState { get { return currentState; } }
 
+    private GemMover gemMover;
+
     #region MonoBehaviour
     //private void Awake()
     //{
-        
+
     //}
 
     private void Start()
@@ -49,8 +52,9 @@ public class SC_GameLogic : MonoBehaviour
         foreach (GameObject g in _obj)
             unityObjects.Add(g.name,g);
 
+        gemMover = new GemMover(coroutineRunner);
         gameBoard = new GameBoard(7, 7);
-        boardGemsFiller = new BoardFiller(gameBoard, coroutineRunner, SC_GameVariables.Instance, this);
+        boardGemsFiller = new BoardFiller(gameBoard, coroutineRunner, SC_GameVariables.Instance, this, gemMover);
         Setup();
     }
     private void Setup()
@@ -125,10 +129,14 @@ public class SC_GameLogic : MonoBehaviour
     private IEnumerator DecreaseRowCo()
     {
         yield return new WaitForSeconds(.2f);
-
+        movingElements = 0;
         int nullCounter = 0;
+
         for (int x = 0; x < gameBoard.Width; x++)
         {
+            List<PoolObject> gemsToMove = new List<PoolObject>(gameBoard.Height);
+            List<Vector2Int> endPoses = new List<Vector2Int>(gameBoard.Height);
+
             for (int y = 0; y < gameBoard.Height; y++)
             {
                 SC_Gem _curGem = gameBoard.GetGem(x, y);
@@ -139,14 +147,30 @@ public class SC_GameLogic : MonoBehaviour
                 else if (nullCounter > 0)
                 {
                     _curGem.posIndex.y -= nullCounter;
-                    SetGem(x, y - nullCounter, _curGem);
                     SetGem(x, y, null);
+                    ++movingElements;
+                    gemsToMove.Add(_curGem);
+                    endPoses.Add(new Vector2Int(x, y - nullCounter));
                 }
             }
+            gemMover.EnqueueMove(gemsToMove, endPoses, OnMoveCompleted);
             nullCounter = 0;
         }
 
+        yield return new WaitUntil(() => movingElements < 1);
+
         StartCoroutine(FilledBoardCo());
+    }
+
+    private int movingElements;
+
+    private void OnMoveCompleted(GemMover.MoveRequest moveRequest)
+    {
+        for (int i = 0; i < moveRequest.target.Count; ++i)
+        {
+            SetGem(moveRequest.endPos[i].x, moveRequest.endPos[i].y, (SC_Gem)moveRequest.target[i]);
+            --movingElements;
+        }
     }
 
     public void ScoreCheck(SC_Gem gemToCheck)

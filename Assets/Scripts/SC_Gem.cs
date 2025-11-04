@@ -1,6 +1,7 @@
 ﻿using BoardLogic;
 using Pooling;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SC_Gem : PoolObject
@@ -37,13 +38,13 @@ public class SC_Gem : PoolObject
         if (!isSet)
             return;
 
-        if (Vector2.Distance(tr.position, posIndex) > 0.01f)
-            tr.position = Vector2.Lerp(tr.position, posIndex, SC_GameVariables.Instance.gemSpeed * Time.deltaTime);
-        else
-        {
-            tr.position = new Vector3(posIndex.x, posIndex.y, 0);
-            scGameLogic.SetGem(posIndex.x, posIndex.y, this);
-        }
+        //if (Vector2.Distance(tr.position, posIndex) > 0.01f)
+        //    tr.position = Vector2.Lerp(tr.position, posIndex, SC_GameVariables.Instance.gemSpeed * Time.deltaTime);
+        //else
+        //{
+        //    tr.position = new Vector3(posIndex.x, posIndex.y, 0);
+        //    scGameLogic.SetGem(posIndex.x, posIndex.y, this);
+        //}
         if (mousePressed && Input.GetMouseButtonUp(0))
         {
             mousePressed = false;
@@ -110,8 +111,9 @@ public class SC_Gem : PoolObject
             posIndex.x--;
         }
 
-        gemMover.EnqueueMove(this, posIndex, OnMoveGemMoveFinished);
-        gemMover.EnqueueMove(otherGem, otherGem.posIndex, OnMoveGemMoveFinished);
+        gemMover.EnqueueMove(new List<PoolObject> { this, otherGem }, new List<Vector2Int> { posIndex, otherGem.posIndex }, OnMoveGemMoveFinished);
+        //gemMover.EnqueueMove(this, posIndex, OnMoveGemMoveFinished);
+        //gemMover.EnqueueMove(otherGem, otherGem.posIndex, OnMoveGemMoveFinished);
 
         //scGameLogic.SetGem(posIndex.x,posIndex.y, this);
         //scGameLogic.SetGem(otherGem.posIndex.x, otherGem.posIndex.y, otherGem);
@@ -121,7 +123,10 @@ public class SC_Gem : PoolObject
 
     private void OnMoveGemMoveFinished(GemMover.MoveRequest moveRequest)
     {
-        scGameLogic.SetGem(moveRequest.endPos.x, moveRequest.endPos.y, (SC_Gem)moveRequest.target);
+        for (int i = 0; i < moveRequest.target.Count; ++i)
+        {
+            scGameLogic.SetGem(moveRequest.endPos[i].x, moveRequest.endPos[i].y, (SC_Gem)moveRequest.target[i]);
+        }
     }
 
     public IEnumerator CheckMoveCo()
