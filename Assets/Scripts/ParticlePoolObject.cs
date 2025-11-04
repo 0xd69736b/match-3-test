@@ -18,6 +18,9 @@ public class ParticlePoolObject : PoolObject
 
     public override void Decommission()
     {
+        if (!IsCommissioned)
+            return;
+
         StopPs();
         this.ReturnToPool();
     }

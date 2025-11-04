@@ -1,6 +1,6 @@
-﻿using Pooling;
+﻿using BoardLogic;
+using Pooling;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class SC_Gem : PoolObject
@@ -23,11 +23,20 @@ public class SC_Gem : PoolObject
 
     public int blastSize = 1;
     private SC_GameLogic scGameLogic;
+    private bool isSet;
+    private GemMover gemMover;
 
-    
+    private void Awake()
+    {
+        isSet = false;
+    }
+
 
     void Update()
     {
+        if (!isSet)
+            return;
+
         if (Vector2.Distance(tr.position, posIndex) > 0.01f)
             tr.position = Vector2.Lerp(tr.position, posIndex, SC_GameVariables.Instance.gemSpeed * Time.deltaTime);
         else
@@ -46,10 +55,12 @@ public class SC_Gem : PoolObject
         }
     }
 
-    public void SetupGem(SC_GameLogic _ScGameLogic,Vector2Int _Position)
+    public void SetupGem(SC_GameLogic _ScGameLogic,Vector2Int _Position, GemMover gemMover)
     {
+        this.gemMover = gemMover;
         posIndex = _Position;
         scGameLogic = _ScGameLogic;
+        isSet = true;
     }
 
     private void OnMouseDown()
@@ -79,7 +90,6 @@ public class SC_Gem : PoolObject
             otherGem = scGameLogic.GetGem(posIndex.x + 1, posIndex.y);
             otherGem.posIndex.x--;
             posIndex.x++;
-
         }
         else if (swipeAngle > 45 && swipeAngle <= 135 && posIndex.y < SC_GameVariables.Instance.colsSize - 1)
         {
@@ -100,10 +110,18 @@ public class SC_Gem : PoolObject
             posIndex.x--;
         }
 
-        scGameLogic.SetGem(posIndex.x,posIndex.y, this);
-        scGameLogic.SetGem(otherGem.posIndex.x, otherGem.posIndex.y, otherGem);
+        gemMover.EnqueueMove(this, posIndex, OnMoveGemMoveFinished);
+        gemMover.EnqueueMove(otherGem, otherGem.posIndex, OnMoveGemMoveFinished);
+
+        //scGameLogic.SetGem(posIndex.x,posIndex.y, this);
+        //scGameLogic.SetGem(otherGem.posIndex.x, otherGem.posIndex.y, otherGem);
 
         StartCoroutine(CheckMoveCo());
+    }
+
+    private void OnMoveGemMoveFinished(GemMover.MoveRequest moveRequest)
+    {
+        scGameLogic.SetGem(moveRequest.endPos.x, moveRequest.endPos.y, (SC_Gem)moveRequest.target);
     }
 
     public IEnumerator CheckMoveCo()

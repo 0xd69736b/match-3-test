@@ -53,6 +53,12 @@ namespace Pooling
             this.UseForExtensions();
 
             InitLookup();
+
+            
+        }
+
+        public void DoPrewarm()
+        {
             if (!autoPrewarm)
                 return;
 

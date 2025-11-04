@@ -13,6 +13,7 @@ public class PoolObject : MonoBehaviour, IGenericPoolElement
     protected GameObject go;
 
     public GameObject GO => go;
+    public Transform Tr => tr;
 
     public int PoolRef { get; set; }
     public bool IsAvailable { get; }
