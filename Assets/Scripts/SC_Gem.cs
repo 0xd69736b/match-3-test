@@ -143,10 +143,13 @@ public class SC_Gem : PoolObject
                 otherGem.posIndex = posIndex;
                 posIndex = previousPos;
 
-                scGameLogic.SetGem(posIndex.x, posIndex.y, this);
-                scGameLogic.SetGem(otherGem.posIndex.x, otherGem.posIndex.y, otherGem);
+                //scGameLogic.SetGem(posIndex.x, posIndex.y, this);
+                //scGameLogic.SetGem(otherGem.posIndex.x, otherGem.posIndex.y, otherGem);
 
-                yield return new WaitForSeconds(.5f);
+                gemMover.EnqueueMove(new List<PoolObject> { this, otherGem }, new List<Vector2Int> { posIndex, otherGem.posIndex }, OnMoveGemMoveFinished);
+
+                //yield return new WaitForSeconds(.5f);
+                yield return gemMover.IdleWait;
                 scGameLogic.SetState(GlobalEnums.GameState.move);
             }
             else
