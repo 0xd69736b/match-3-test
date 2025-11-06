@@ -37,15 +37,25 @@ public class GameBoard
     {
         if (_PositionToCheck.x > 1)
         {
-            if (allGems[_PositionToCheck.x - 1, _PositionToCheck.y].type == _GemToCheck.type &&
-                allGems[_PositionToCheck.x - 2, _PositionToCheck.y].type == _GemToCheck.type)
+            SC_Gem prev1Gem = allGems[_PositionToCheck.x - 1, _PositionToCheck.y];
+            SC_Gem prev2Gem = allGems[_PositionToCheck.x - 2, _PositionToCheck.y];
+
+            if (prev1Gem == null || prev2Gem == null)
+                return false;
+
+            if (prev1Gem.Equals(_GemToCheck) && prev2Gem.Equals(_GemToCheck))
                 return true;
         }
 
         if (_PositionToCheck.y > 1)
         {
-            if (allGems[_PositionToCheck.x, _PositionToCheck.y - 1].type == _GemToCheck.type &&
-                allGems[_PositionToCheck.x, _PositionToCheck.y - 2].type == _GemToCheck.type)
+            SC_Gem prev1Gem = allGems[_PositionToCheck.x, _PositionToCheck.y - 1];
+            SC_Gem prev2Gem = allGems[_PositionToCheck.x, _PositionToCheck.y - 2];
+
+            if (prev1Gem == null || prev2Gem == null)
+                return false;
+
+            if (prev1Gem.Equals(_GemToCheck) && prev2Gem.Equals(_GemToCheck))
                 return true;
         }
 
@@ -79,7 +89,7 @@ public class GameBoard
                         if (leftGem != null && rightGem != null)
                         {
                             //Match
-                            if (leftGem.type == currentGem.type && rightGem.type == currentGem.type)
+                            if (leftGem.Equals(currentGem) && rightGem.Equals(currentGem))
                             {
                                 currentGem.isMatch = true;
                                 leftGem.isMatch = true;
@@ -99,7 +109,7 @@ public class GameBoard
                         if (aboveGem != null && bellowGem != null)
                         {
                             //Match
-                            if (aboveGem.type == currentGem.type && bellowGem.type == currentGem.type)
+                            if (aboveGem.Equals(currentGem) && bellowGem.Equals(currentGem))
                             {
                                 currentGem.isMatch = true;
                                 aboveGem.isMatch = true;

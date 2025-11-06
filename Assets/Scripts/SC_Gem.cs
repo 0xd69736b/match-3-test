@@ -1,10 +1,11 @@
 ﻿using BoardLogic;
 using Pooling;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SC_Gem : PoolObject
+public class SC_Gem : PoolObject, IEquatable<SC_Gem>
 {
     [HideInInspector]
     public Vector2Int posIndex;
@@ -17,6 +18,7 @@ public class SC_Gem : PoolObject
     private SC_Gem otherGem;
 
     public GlobalEnums.GemType type;
+    public GlobalEnums.GemColor color;
     public bool isMatch = false;
     private Vector2Int previousPos;
     public GameObject destroyEffect;
@@ -24,20 +26,10 @@ public class SC_Gem : PoolObject
 
     public int blastSize = 1;
     private SC_GameLogic scGameLogic;
-    private bool isSet;
     private GemMover gemMover;
-
-    private void Awake()
-    {
-        isSet = false;
-    }
-
 
     void Update()
     {
-        if (!isSet)
-            return;
-
         //if (Vector2.Distance(tr.position, posIndex) > 0.01f)
         //    tr.position = Vector2.Lerp(tr.position, posIndex, SC_GameVariables.Instance.gemSpeed * Time.deltaTime);
         //else
@@ -61,7 +53,6 @@ public class SC_Gem : PoolObject
         this.gemMover = gemMover;
         posIndex = _Position;
         scGameLogic = _ScGameLogic;
-        isSet = true;
     }
 
     private void OnMouseDown()
@@ -111,7 +102,7 @@ public class SC_Gem : PoolObject
             posIndex.x--;
         }
 
-        gemMover.EnqueueMove(new List<PoolObject> { this, otherGem }, new List<Vector2Int> { posIndex, otherGem.posIndex }, OnMoveGemMoveFinished);
+        gemMover.EnqueueMove(new List<PoolObject> { this, otherGem }, new List<Vector2Int> { posIndex, otherGem.posIndex }, OnGemMoveFinished);
         //gemMover.EnqueueMove(this, posIndex, OnMoveGemMoveFinished);
         //gemMover.EnqueueMove(otherGem, otherGem.posIndex, OnMoveGemMoveFinished);
 
@@ -121,7 +112,7 @@ public class SC_Gem : PoolObject
         StartCoroutine(CheckMoveCo());
     }
 
-    private void OnMoveGemMoveFinished(GemMover.MoveRequest moveRequest)
+    private void OnGemMoveFinished(GemMover.MoveRequest moveRequest)
     {
         for (int i = 0; i < moveRequest.target.Count; ++i)
         {
@@ -129,11 +120,12 @@ public class SC_Gem : PoolObject
         }
     }
 
-    public IEnumerator CheckMoveCo()
+    private IEnumerator CheckMoveCo()
     {
         scGameLogic.SetState(GlobalEnums.GameState.wait);
 
-        yield return new WaitForSeconds(.5f);
+        //yield return new WaitForSeconds(.5f);
+        yield return gemMover.IdleWait;
         scGameLogic.FindAllMatches();
 
         if (otherGem != null)
@@ -146,7 +138,7 @@ public class SC_Gem : PoolObject
                 //scGameLogic.SetGem(posIndex.x, posIndex.y, this);
                 //scGameLogic.SetGem(otherGem.posIndex.x, otherGem.posIndex.y, otherGem);
 
-                gemMover.EnqueueMove(new List<PoolObject> { this, otherGem }, new List<Vector2Int> { posIndex, otherGem.posIndex }, OnMoveGemMoveFinished);
+                gemMover.EnqueueMove(new List<PoolObject> { this, otherGem }, new List<Vector2Int> { posIndex, otherGem.posIndex }, OnGemMoveFinished);
 
                 //yield return new WaitForSeconds(.5f);
                 yield return gemMover.IdleWait;
@@ -159,5 +151,8 @@ public class SC_Gem : PoolObject
         }
     }
 
-
+    public bool Equals(SC_Gem other)
+    {
+        return color == other.color && type == other.type;
+    }
 }
