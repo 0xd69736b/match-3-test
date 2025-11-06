@@ -28,7 +28,7 @@ namespace FillBoardLogic
             this.gameVariables = gameVariables;
             this.gemMover = gemMover;
             IGemPicker gemPicker = new RandomGamePicker(gameVariables, gameBoard);
-            IGemSpawner gemSpawner = new GemInstantSpawner(gemPicker, gameVariables);
+            IGemSpawner gemSpawner = new GemInstantSpawner(gemPicker, gameVariables, gameBoard);
             IGemPicker bgGemPicker = new BackgroundGemPicker(gameVariables);
             IGemSpawner bgGemSpawner = new BgTileSpawner(bgGemPicker);
             
