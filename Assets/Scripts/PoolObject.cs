@@ -1,6 +1,4 @@
 using Pooling;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PoolObject : MonoBehaviour, IGenericPoolElement
@@ -11,6 +9,8 @@ public class PoolObject : MonoBehaviour, IGenericPoolElement
     [HideInInspector]
     [SerializeField]
     protected GameObject go;
+    [SerializeField]
+    protected Vector3 resetPos = new Vector3(100, 0, 100);
 
     public GameObject GO => go;
     public Transform Tr => tr;
@@ -48,6 +48,8 @@ public class PoolObject : MonoBehaviour, IGenericPoolElement
 
     public virtual void Decommission()
     {
+        Tr.parent = null;
+        Tr.position = resetPos;
         go.SetActive(false);
         this.ReturnToPool();
     }
