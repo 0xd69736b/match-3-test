@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71819f4455bca344aba9a9873bf13354, type: 3}
   m_Name: DefaultData
   m_EditorClassIdentifier: 
-  duration: 0.1
+  duration: 0.2
   curve:
     serializedVersion: 2
     m_Curve:
