@@ -869,6 +869,12 @@ MonoBehaviour:
   - {fileID: 3416069867743778491, guid: 93bd623174244c047af9ce43cc254c32, type: 3}
   - {fileID: 8289337781777951430, guid: 473855e3d0d3c8143836b678c9a1b8b5, type: 3}
   - {fileID: 4372168081761593873, guid: 91ba2370328500d4db689dad894b1602, type: 3}
+  coloredBombs:
+  - {fileID: 1540101826776384579, guid: 45292dc393315a847bd8d92be520ab8b, type: 3}
+  - {fileID: 2633446685720405120, guid: b5b8bced19b5df94198433d0cd179121, type: 3}
+  - {fileID: 2633446685720405120, guid: 362c76ac0e6ac8a41a480277899ae427, type: 3}
+  - {fileID: 2633446685720405120, guid: aaed9367dba49a44d9e3e9a9104509b5, type: 3}
+  - {fileID: 2633446685720405120, guid: 2955400a40fbd634b872069c9a62c4d4, type: 3}
   bonusAmount: 0.5
   bombChance: 3
   dropHeight: 1
@@ -876,6 +882,9 @@ MonoBehaviour:
   scoreSpeed: 5
   rowsSize: 7
   colsSize: 7
+  gemLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!1 &1450061018
 GameObject:
   m_ObjectHideFlags: 0

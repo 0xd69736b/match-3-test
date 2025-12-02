@@ -20,6 +20,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -7932498854989450506, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}
+      propertyPath: blastSize
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -7932498854989450506, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
+        type: 3}
       propertyPath: destroyEffect
       value: 
       objectReference: {fileID: 8968486364681163996, guid: 05c754e3d4f9fd349ac1def58d17670f,

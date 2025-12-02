@@ -69,7 +69,7 @@ namespace FillBoardLogic
 
             SC_Gem gem = (SC_Gem)gemArgs.gem;
             gameBoard.SetGem(gemArgs.x, gemArgs.y, gem);
-            gem.SetupGem(gameLogic, new Vector2Int(gemArgs.x, gemArgs.y), gemMover);
+            gem.SetupGem(new Vector2Int(gemArgs.x, gemArgs.y));
         }
 
         protected abstract IEnumerator CallSpawn(int x, int y, Transform parent);

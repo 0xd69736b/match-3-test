@@ -3,12 +3,12 @@ using UnityEngine;
 namespace FillBoardLogic.Spawning
 {
 
-    public class RandomGamePicker : IGemPicker
+    public class RandomGemPicker : IGemPicker
     {
         private readonly SC_GameVariables gameVariables;
         private readonly GameBoard gameBoard;
 
-        public RandomGamePicker(SC_GameVariables gameVariables, GameBoard gameBoard)
+        public RandomGemPicker(SC_GameVariables gameVariables, GameBoard gameBoard)
         {
             this.gameVariables = gameVariables;
             this.gameBoard = gameBoard;

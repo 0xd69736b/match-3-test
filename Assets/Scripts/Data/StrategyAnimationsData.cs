@@ -8,5 +8,6 @@ namespace FillBoardLogic.Data
     {
         public float duration;
         public AnimationCurve curve;
+        public bool animateColumnByColumn;
     }
 }

@@ -1,20 +1,22 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+﻿using BoardLogic;
 using UnityEngine;
 
 public class GameBoard
 {
     #region Variables
 
+    private readonly BoardIndexCache gemsCache;
+    private Vector2Int origin = Vector2Int.zero;
+    private int cellSize = 1;
+
     private int height = 0;
+
     public int Height { get { return height; } }
 
     private int width = 0;
     public int Width { get { return width; } }
   
     private SC_Gem[,] allGems;
-  //  public Gem[,] AllGems { get { return allGems; } }
 
     private int score = 0;
     public int Score 
@@ -23,8 +25,6 @@ public class GameBoard
         set { score = value; }
     }
 
-    private List<SC_Gem> currentMatches = new List<SC_Gem>();
-    public List<SC_Gem> CurrentMatches { get { return currentMatches; } }
     #endregion
 
     public GameBoard(int _Width, int _Height)
@@ -32,6 +32,7 @@ public class GameBoard
         height = _Height;
         width = _Width;
         allGems = new SC_Gem[width, height];
+        gemsCache = new BoardIndexCache();
     }
     public bool MatchesAt(Vector2Int _PositionToCheck, SC_Gem _GemToCheck)
     {
@@ -62,126 +63,39 @@ public class GameBoard
         return false;
     }
 
+    public bool InBounds(Vector2Int cell)
+    {
+        return InBounds(cell.x, cell.y);
+    }
+
+    public bool InBounds(int x, int y)
+    {
+        return x >= 0 && x < width && y >= 0 && y < height;
+    }
+
+    public Vector2Int WorldToCell(Vector3 worldPos)
+    {
+        int x = Mathf.RoundToInt((worldPos.x - origin.x) / cellSize);
+        int y = Mathf.RoundToInt((worldPos.y - origin.y) / cellSize);
+        return new Vector2Int(x, y);
+    }
+
     public void SetGem(int _X, int _Y, SC_Gem _Gem)
     {
         allGems[_X, _Y] = _Gem;
+        GameObject gemGO = _Gem == null ? null : _Gem.GO;
+        gemsCache.OnSet(_X, _Y, gemGO);
     }
+
     public SC_Gem GetGem(int _X,int _Y)
     {
        return allGems[_X, _Y];
     }
 
-    public void FindAllMatches()
+    public bool TryGetGemCell(GameObject gemGO, out Vector2Int cell)
     {
-        currentMatches.Clear();
-
-        for (int x = 0; x < width; x++)
-            for (int y = 0; y < height; y++)
-            {
-                SC_Gem currentGem = allGems[x, y];
-                if (currentGem != null)
-                {
-                    if (x > 0 && x < width - 1)
-                    {
-                        SC_Gem leftGem = allGems[x - 1, y];
-                        SC_Gem rightGem = allGems[x + 1, y];
-                        //checking no empty spots
-                        if (leftGem != null && rightGem != null)
-                        {
-                            //Match
-                            if (leftGem.Equals(currentGem) && rightGem.Equals(currentGem))
-                            {
-                                currentGem.isMatch = true;
-                                leftGem.isMatch = true;
-                                rightGem.isMatch = true;
-                                currentMatches.Add(currentGem);
-                                currentMatches.Add(leftGem);
-                                currentMatches.Add(rightGem);
-                            }
-                        }
-                    }
-
-                    if (y > 0 && y < height - 1)
-                    {
-                        SC_Gem aboveGem = allGems[x, y - 1];
-                        SC_Gem bellowGem = allGems[x, y + 1];
-                        //checking no empty spots
-                        if (aboveGem != null && bellowGem != null)
-                        {
-                            //Match
-                            if (aboveGem.Equals(currentGem) && bellowGem.Equals(currentGem))
-                            {
-                                currentGem.isMatch = true;
-                                aboveGem.isMatch = true;
-                                bellowGem.isMatch = true;
-                                currentMatches.Add(currentGem);
-                                currentMatches.Add(aboveGem);
-                                currentMatches.Add(bellowGem);
-                            }
-                        }
-                    }
-                }
-            }
-
-        if (currentMatches.Count > 0)
-            currentMatches = currentMatches.Distinct().ToList();
-
-        CheckForBombs();
+        return gemsCache.TryGetCell(gemGO, out cell);
     }
 
-    public void CheckForBombs()
-    {
-        for (int i = 0; i < currentMatches.Count; i++)
-        {
-            SC_Gem gem = currentMatches[i];
-            int x = gem.posIndex.x;
-            int y = gem.posIndex.y;
-
-            if (gem.posIndex.x > 0)
-            {
-                if (allGems[x - 1, y] != null && allGems[x - 1, y].type == GlobalEnums.GemType.bomb)
-                    MarkBombArea(new Vector2Int(x - 1, y), allGems[x - 1, y].blastSize);
-            }
-
-            if (gem.posIndex.x + 1 < width)
-            {
-                if (allGems[x + 1, y] != null && allGems[x + 1, y].type == GlobalEnums.GemType.bomb)
-                    MarkBombArea(new Vector2Int(x + 1, y), allGems[x + 1, y].blastSize);
-            }
-
-            if (gem.posIndex.y > 0)
-            {
-                if (allGems[x, y - 1] != null && allGems[x, y - 1].type == GlobalEnums.GemType.bomb)
-                    MarkBombArea(new Vector2Int(x, y - 1), allGems[x, y - 1].blastSize);
-            }
-
-            if (gem.posIndex.y + 1 < height)
-            {
-                if (allGems[x, y + 1] != null && allGems[x, y + 1].type == GlobalEnums.GemType.bomb)
-                    MarkBombArea(new Vector2Int(x, y + 1), allGems[x, y + 1].blastSize);
-            }
-        }
-    }
-
-    public void MarkBombArea(Vector2Int bombPos, int _BlastSize)
-    {
-        string _print = "";
-        for (int x = bombPos.x - _BlastSize; x <= bombPos.x + _BlastSize; x++)
-        {
-            for (int y = bombPos.y - _BlastSize; y <= bombPos.y + _BlastSize; y++)
-            {
-                if (x >= 0 && x < width && y >= 0 && y < height)
-                {
-                    if (allGems[x, y] != null)
-                    {
-                        _print += "(" + x + "," + y + ")" + System.Environment.NewLine;
-                        allGems[x, y].isMatch = true;
-                        currentMatches.Add(allGems[x, y]);
-                    }
-                }
-            }
-        }
-        currentMatches = currentMatches.Distinct().ToList();
-    }
 }
 

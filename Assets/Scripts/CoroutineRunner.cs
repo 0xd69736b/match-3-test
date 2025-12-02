@@ -9,10 +9,11 @@ namespace Utility
         private HashSet<IEnumerator> runningRoutines = new HashSet<IEnumerator>(10);
 
 
-        public void RunCoroutine(IEnumerator coroutine)
+        public Coroutine RunCoroutine(IEnumerator coroutine)
         {
-            StartCoroutine(Run(coroutine));
+            Coroutine routine = StartCoroutine(Run(coroutine));
             runningRoutines.Add(coroutine);
+            return routine;
         }
 
         private void OnDestroy()

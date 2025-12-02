@@ -37,5 +37,16 @@ namespace Assets.Scripts.BoardFill.GemSpawner
 
             yield return null;
         }
+
+        public PoolObject Spawn(int x, int y, Vector2Int spawnPos, Transform parent)
+        {
+            GameObject prefab = gemPicker.PickGem(x, y);
+            SC_Gem instance = prefab.Pool<SC_Gem>();
+            instance.name = $"BG Tile - {x}, {y}";
+            Vector3 pos = new Vector3(spawnPos.x, spawnPos.y, 0);
+            instance.SetParent(parent);
+            instance.SetPositionAndRotation(pos, Quaternion.identity);
+            return instance;
+        }
     }
 }

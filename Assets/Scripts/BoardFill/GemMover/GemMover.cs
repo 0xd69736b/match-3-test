@@ -162,6 +162,12 @@ namespace BoardLogic
         }
 
         private bool IsIdle() => !isRunning && movesQueue.Count == 0;
+
+        public Coroutine WaitUntilIdle() => coroutineRunner.RunCoroutine(WaitIdle());
+        public IEnumerator WaitIdle()
+        {
+            yield return IdleWait;
+        }
     }
 
 }

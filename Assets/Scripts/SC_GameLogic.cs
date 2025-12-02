@@ -1,11 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using Pooling;
 using FillBoardLogic;
 using Utility;
 using BoardLogic;
+using System.Collections;
 
 public class SC_GameLogic : MonoBehaviour
 {
@@ -23,12 +23,15 @@ public class SC_GameLogic : MonoBehaviour
     public GlobalEnums.GameState CurrentState { get { return currentState; } }
 
     private GemMover gemMover;
+    private GemSwapController gemSwaper;
+    private InputController inputController;
+    private MatchDetector matchDetector;
+    private IMatchResolver matchResolver;
+
+    private bool isResolving;
+    private TMP_Text scoreTxt;
 
     #region MonoBehaviour
-    //private void Awake()
-    //{
-
-    //}
 
     private void Start()
     {
@@ -40,8 +43,17 @@ public class SC_GameLogic : MonoBehaviour
     private void Update()
     {
         displayScore = Mathf.Lerp(displayScore, gameBoard.Score, SC_GameVariables.Instance.scoreSpeed * Time.deltaTime);
-        unityObjects["Txt_Score"].GetComponent<TMPro.TextMeshProUGUI>().text = displayScore.ToString("0");
+        scoreTxt.text = displayScore.ToString("0");
+        inputController.HandleInput();
     }
+
+    private void OnDestroy()
+    {
+        gemSwaper.OnBeginSwap -= OnBeginSwap;
+        gemSwaper.OnSwapWithMatch -= OnSwapWithMatch;
+        gemSwaper.OnSwapWithoutMatch -= OnSwapWithoutMatch;
+    }
+
     #endregion
 
     #region Logic
@@ -52,56 +64,52 @@ public class SC_GameLogic : MonoBehaviour
         foreach (GameObject g in _obj)
             unityObjects.Add(g.name,g);
 
+        scoreTxt = unityObjects["Txt_Score"].GetComponent<TMP_Text>();
+
         gemMover = new GemMover(coroutineRunner);
         gameBoard = new GameBoard(7, 7);
+
+        matchDetector = new MatchDetector(gameBoard);
+        gemSwaper = new GemSwapController(gameBoard, gemMover, matchDetector, coroutineRunner);
         boardGemsFiller = new BoardFiller(gameBoard, coroutineRunner, SC_GameVariables.Instance, this, gemMover);
+        inputController = new InputController(Camera.main, gameBoard, gemSwaper, this, SC_GameVariables.Instance);
+        matchDetector = new MatchDetector(gameBoard);
+        matchResolver = new MatchResolver(gameBoard, matchDetector, boardGemsFiller, SC_GameVariables.Instance, ScoreCheck);
+
+        gemSwaper.OnBeginSwap += OnBeginSwap;
+        gemSwaper.OnSwapWithMatch += OnSwapWithMatch;
+        gemSwaper.OnSwapWithoutMatch += OnSwapWithoutMatch;
+
         Setup();
     }
+
     private void Setup()
     {
         boardGemsFiller.Init(unityObjects["GemsHolder"].transform);
         boardGemsFiller.FillBoard();
-
-        //for (int x = 0; x < gameBoard.Width; x++)
-        //    for (int y = 0; y < gameBoard.Height; y++)
-        //    {
-        //        Vector2 _pos = new Vector2(x, y);
-        //        GameObject _bgTile = Instantiate(SC_GameVariables.Instance.bgTilePrefabs, _pos, Quaternion.identity);
-        //        _bgTile.transform.SetParent(unityObjects["GemsHolder"].transform);
-        //        _bgTile.name = "BG Tile - " + x + ", " + y;
-
-        //        int _gemToUse = Random.Range(0, SC_GameVariables.Instance.gems.Length);
-
-        //        int iterations = 0;
-        //        while (gameBoard.MatchesAt(new Vector2Int(x, y), SC_GameVariables.Instance.gems[_gemToUse]) && iterations < 100)
-        //        {
-        //            _gemToUse = Random.Range(0, SC_GameVariables.Instance.gems.Length);
-        //            iterations++;
-        //        }
-        //        SpawnGem(new Vector2Int(x, y), SC_GameVariables.Instance.gems[_gemToUse]);
-        //    }
+        coroutineRunner.RunCoroutine(ResolveAll());
     }
+
     public void StartGame()
     {
-        unityObjects["Txt_Score"].GetComponent<TextMeshProUGUI>().text = score.ToString("0");
+        scoreTxt.text = score.ToString("0");
     }
 
-    //private void SpawnGem(Vector2Int _Position, SC_Gem _GemToSpawn)
-    //{
-    //    if (Random.Range(0, 100f) < SC_GameVariables.Instance.bombChance)
-    //        _GemToSpawn = SC_GameVariables.Instance.bomb;
+    private void OnBeginSwap()
+    {
+        SetState(GlobalEnums.GameState.wait);
+    }
 
-    //    SC_Gem _gem = _GemToSpawn.GO.Pool<SC_Gem>();
-    //    Vector3 pos = new Vector3(_Position.x, _Position.y + SC_GameVariables.Instance.dropHeight, 0f);
-    //    _gem.SetPositionAndRotation(pos, Quaternion.identity);
-    //    //SC_Gem _gem = Instantiate(_GemToSpawn, new Vector3(_Position.x, _Position.y + SC_GameVariables.Instance.dropHeight, 0f), Quaternion.identity);
-    //    //_gem.transform.SetParent(unityObjects["GemsHolder"].transform);
+    private void OnSwapWithMatch(Vector2Int? initiator, MatchScanResult result)
+    {
+        coroutineRunner.RunCoroutine(ResolveAll(initiator));
+        SetState(GlobalEnums.GameState.wait);
+    }
 
-    //    _gem.SetParent(unityObjects["GemsHolder"].transform);
-    //    _gem.name = "Gem - " + _Position.x + ", " + _Position.y;
-    //    gameBoard.SetGem(_Position.x,_Position.y, _gem);
-    //    _gem.SetupGem(this,_Position);
-    //}
+    private void OnSwapWithoutMatch(Vector2Int from, Vector2Int to)
+    {
+        SetState(GlobalEnums.GameState.move);
+    }
 
     public void SetGem(int _X,int _Y, SC_Gem _Gem)
     {
@@ -115,140 +123,23 @@ public class SC_GameLogic : MonoBehaviour
     {
         currentState = _CurrentState;
     }
-    public void DestroyMatches()
+
+    private IEnumerator ResolveAll(Vector2Int? initiator = null)
     {
-        for (int i = 0; i < gameBoard.CurrentMatches.Count; i++)
-            if (gameBoard.CurrentMatches[i] != null)
-            {
-                ScoreCheck(gameBoard.CurrentMatches[i]);
-                DestroyMatchedGemsAt(gameBoard.CurrentMatches[i].posIndex);
-            }
+        if (isResolving)
+            yield break;
 
-        StartCoroutine(DecreaseRowCo());
-    }
-    private IEnumerator DecreaseRowCo()
-    {
-        yield return new WaitForSeconds(.2f);
-        movingElements = 0;
-        int nullCounter = 0;
+        isResolving = true;
 
-        for (int x = 0; x < gameBoard.Width; x++)
-        {
-            List<PoolObject> gemsToMove = new List<PoolObject>(gameBoard.Height);
-            List<Vector2Int> endPoses = new List<Vector2Int>(gameBoard.Height);
+        yield return matchResolver.ResolveAll(initiator);
 
-            for (int y = 0; y < gameBoard.Height; y++)
-            {
-                SC_Gem _curGem = gameBoard.GetGem(x, y);
-                if (_curGem == null)
-                {
-                    nullCounter++;
-                }
-                else if (nullCounter > 0)
-                {
-                    _curGem.posIndex.y -= nullCounter;
-                    SetGem(x, y, null);
-                    ++movingElements;
-                    gemsToMove.Add(_curGem);
-                    endPoses.Add(new Vector2Int(x, y - nullCounter));
-                }
-            }
-            gemMover.EnqueueMove(gemsToMove, endPoses, OnMoveCompleted);
-            nullCounter = 0;
-        }
-
-        yield return new WaitUntil(() => movingElements < 1);
-
-        StartCoroutine(FilledBoardCo());
-    }
-
-    private int movingElements;
-
-    private void OnMoveCompleted(GemMover.MoveRequest moveRequest)
-    {
-        for (int i = 0; i < moveRequest.target.Count; ++i)
-        {
-            SetGem(moveRequest.endPos[i].x, moveRequest.endPos[i].y, (SC_Gem)moveRequest.target[i]);
-            --movingElements;
-        }
+        isResolving = false;
+        SetState(GlobalEnums.GameState.move);
     }
 
     public void ScoreCheck(SC_Gem gemToCheck)
     {
         gameBoard.Score += gemToCheck.scoreValue;
-    }
-    private void DestroyMatchedGemsAt(Vector2Int _Pos)
-    {
-        SC_Gem _curGem = gameBoard.GetGem(_Pos.x,_Pos.y);
-        if (_curGem != null)
-        {
-            PoolObject destroyEffectInstance = _curGem.destroyEffect.Pool<PoolObject>();
-            destroyEffectInstance.SetPositionAndRotation(new Vector2(_Pos.x, _Pos.y), Quaternion.identity);
-            //Instantiate(_curGem.destroyEffect, new Vector2(_Pos.x, _Pos.y), Quaternion.identity);
-
-            _curGem.Decommission();
-            //Destroy(_curGem.gameObject);
-            SetGem(_Pos.x,_Pos.y, null);
-        }
-    }
-
-    private IEnumerator FilledBoardCo()
-    {
-        yield return new WaitForSeconds(0.5f);
-
-        yield return boardGemsFiller.RefillBoardCor();
-        //RefillBoard();
-
-        yield return new WaitForSeconds(0.5f);
-        gameBoard.FindAllMatches();
-        if (gameBoard.CurrentMatches.Count > 0)
-        {
-            yield return new WaitForSeconds(0.5f);
-            DestroyMatches();
-        }
-        else
-        {
-            yield return new WaitForSeconds(0.5f);
-            currentState = GlobalEnums.GameState.move;
-        }
-    }
-    //private void RefillBoard()
-    //{
-    //    for (int x = 0; x < gameBoard.Width; x++)
-    //    {
-    //        for (int y = 0; y < gameBoard.Height; y++)
-    //        {
-    //            SC_Gem _curGem = gameBoard.GetGem(x,y);
-    //            if (_curGem == null)
-    //            {
-    //                int gemToUse = Random.Range(0, SC_GameVariables.Instance.gems.Length);
-    //                SpawnGem(new Vector2Int(x, y), SC_GameVariables.Instance.gems[gemToUse]);
-    //            }
-    //        }
-    //    }
-    //    CheckMisplacedGems();
-    //}
-    //private void CheckMisplacedGems()
-    //{
-    //    List<SC_Gem> foundGems = new List<SC_Gem>();
-    //    foundGems.AddRange(FindObjectsOfType<SC_Gem>());
-    //    for (int x = 0; x < gameBoard.Width; x++)
-    //    {
-    //        for (int y = 0; y < gameBoard.Height; y++)
-    //        {
-    //            SC_Gem _curGem = gameBoard.GetGem(x, y);
-    //            if (foundGems.Contains(_curGem))
-    //                foundGems.Remove(_curGem);
-    //        }
-    //    }
-
-    //    foreach (SC_Gem g in foundGems)
-    //        //Destroy(g.gameObject);
-    //        g.Decommission();
-    //}
-    public void FindAllMatches()
-    {
-        gameBoard.FindAllMatches();
     }
 
     #endregion

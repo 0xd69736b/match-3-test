@@ -10,6 +10,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1540101826776384579, guid: 45292dc393315a847bd8d92be520ab8b,
         type: 3}
+      propertyPath: type
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1540101826776384579, guid: 45292dc393315a847bd8d92be520ab8b,
+        type: 3}
       propertyPath: color
       value: 4
       objectReference: {fileID: 0}
